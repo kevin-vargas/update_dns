@@ -43,8 +43,10 @@ L:
 		case <-time.After(time.Duration(ip.interval) * time.Second):
 			ip.Lock()
 			currentPublicIp := getPublicIp()
+			log.Printf("Current Public Ip: %s\n", currentPublicIp)
 			res := bytes.Compare(ip.public, currentPublicIp)
 			if res != 0 {
+				log.Println("Public Ip Change making notification")
 				ip.public = currentPublicIp
 				ip.notify()
 			}
