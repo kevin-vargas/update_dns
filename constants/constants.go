@@ -1,5 +1,6 @@
 package constants
 
 const (
-	INTERVAL_NOTIFY int = 3600
+	INTERVAL_NOTIFY int = 1800
+	INTERVAL_ERROR  int = 150
 )

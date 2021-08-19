@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"sync"
 	"time"
+	"update_dns/constants"
 )
 
 const (
@@ -39,6 +40,9 @@ func New(interval int, notify func()) *IP {
 }
 
 func (ip *IP) Start() {
+	var onceError *sync.Once = &sync.Once{}
+	var once *sync.Once = &sync.Once{}
+
 L:
 	for {
 		select {
@@ -46,9 +50,24 @@ L:
 			break L
 		case <-time.After(time.Duration(ip.interval) * time.Second):
 			currentPublicIp, err := getPublicIp()
-			if err == nil {
+			if err != nil {
+				log.Println("No connection")
+				onceError.Do(func() {
+					log.Println("Changing to ERROR interval")
+					ip.Lock()
+					ip.interval = constants.INTERVAL_ERROR
+					ip.Unlock()
+					once = &sync.Once{}
+				})
+
+			} else {
 				log.Printf("Current Public Ip: %s\n", currentPublicIp)
 				ip.Lock()
+				once.Do(func() {
+					log.Println("Changing to DEFAULT interval")
+					ip.interval = constants.INTERVAL_NOTIFY
+					onceError = &sync.Once{}
+				})
 				res := bytes.Compare(ip.public, currentPublicIp)
 				if res != 0 {
 					log.Println("Public Ip Change making notification")
